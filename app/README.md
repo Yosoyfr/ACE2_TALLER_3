@@ -1,8 +1,12 @@
-# mm_app
+# app
 
 A new Flutter application.
 (only android)
-The app is capable to connect with arduio through Bluetooth and send commands
+The app is capable to connect with arduino through Bluetooth and send requests to a REST API
+
+# Packages
+- flutter_bluetooth_serial - for connecting bluetooth devices
+- http - a composable, Future-based library for making HTTP requests.
 
 ## Getting Started
 
