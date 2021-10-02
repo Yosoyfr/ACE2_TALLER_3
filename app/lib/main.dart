@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
-import 'package:mm_app/connection.dart';
-import 'package:mm_app/led.dart';
+import 'package:app/connection.dart';
+import 'package:app/led.dart';
 
+// Main
 void main() {
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+  // Este widget es la raíz de la aplicación.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -18,8 +19,10 @@ class MyApp extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: FutureBuilder(
+        // Debemos requerir que la conexion a bluetooth este habilitada
         future: FlutterBluetoothSerial.instance.requestEnable(),
         builder: (context, future) {
+          // Si estamos esperando la conexion de bluetooth mostramos una pantalla de espera
           if (future.connectionState == ConnectionState.waiting) {
             return Scaffold(
               body: Container(
@@ -34,6 +37,7 @@ class MyApp extends StatelessWidget {
               ),
             );
           } else if (future.connectionState == ConnectionState.done) {
+            // Si la conexion del dispositivo existe nos vamos al Home de la App
             return Home();
           } else {
             return Home();
@@ -53,8 +57,8 @@ class Home extends StatelessWidget {
         title: Text('Connection'),
       ),
       body: SelectBondedDevicePage(
-        onCahtPage: (device1) {
-          BluetoothDevice device = device1;
+        onCahtPage: (_device) {
+          BluetoothDevice device = _device;
           Navigator.push(
             context,
             MaterialPageRoute(

@@ -1,4 +1,4 @@
-name: mm_app
+name: app
 description: A new Flutter application.
 
 # The following line prevents the package from being accidentally published to
@@ -29,6 +29,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.0
   flutter_bluetooth_serial: ^0.2.2
+  http: ^0.12.2
 
 dev_dependencies:
   flutter_test:

@@ -1,18 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
-import 'package:mm_app/device.dart';
+import 'package:app/device.dart';
 
 class SelectBondedDevicePage extends StatefulWidget {
-  /// If true, on page start there is performed discovery upon the bonded devices.
-  /// Then, if they are not avaliable, they would be disabled from the selection.
+  /// Si es verdadero, en el inicio de la página se realiza una busqueda de los dispositivos vinculados.
+  /// Si no están disponibles, serán deshabilitados de la selección.
   final bool checkAvailability;
   final Function onCahtPage;
-
   const SelectBondedDevicePage(
       {this.checkAvailability = true, @required this.onCahtPage});
-
   @override
+  // Constructor
   _SelectBondedDevicePage createState() => new _SelectBondedDevicePage();
 }
 
@@ -21,34 +20,34 @@ enum _DeviceAvailability {
   yes,
 }
 
+// Dispositivos con disponibilidad de conexion
 class _DeviceWithAvailability extends BluetoothDevice {
   BluetoothDevice device;
   _DeviceAvailability availability;
   int rssi;
-
+  // Constructor
   _DeviceWithAvailability(this.device, this.availability, [this.rssi]);
 }
 
+// Seleccion de dispositivos vinculados
 class _SelectBondedDevicePage extends State<SelectBondedDevicePage> {
+  // Lista de dispositivos
   List<_DeviceWithAvailability> devices = List<_DeviceWithAvailability>();
-
-  // Availability
+  // Disponibilidad
   StreamSubscription<BluetoothDiscoveryResult> _discoveryStreamSubscription;
   bool _isDiscovering;
-
+  // Constructor
   _SelectBondedDevicePage();
 
   @override
   void initState() {
     super.initState();
-
+    // Descubrimiento de dispositivos
     _isDiscovering = widget.checkAvailability;
-
     if (_isDiscovering) {
       _startDiscovery();
     }
-
-    // Setup a list of the bonded devices
+    // Configurar una lista de dispositivos vinculados
     FlutterBluetoothSerial.instance
         .getBondedDevices()
         .then((List<BluetoothDevice> bondedDevices) {
@@ -81,7 +80,6 @@ class _SelectBondedDevicePage extends State<SelectBondedDevicePage> {
         }
       });
     });
-
     _discoveryStreamSubscription.onDone(() {
       setState(() {
         _isDiscovering = false;
@@ -91,7 +89,7 @@ class _SelectBondedDevicePage extends State<SelectBondedDevicePage> {
 
   @override
   void dispose() {
-    // Avoid memory leak (`setState` after dispose) and cancel discovery
+    // Evitar la pérdida de memoria y cancelar el descubrimiento
     _discoveryStreamSubscription?.cancel();
     super.dispose();
   }

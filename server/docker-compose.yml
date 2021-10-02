@@ -1,0 +1,10 @@
+version: "2"
+services:
+  server:
+    container_name: server-ace2
+    restart: always
+    build: .
+    environment:
+      NODE_ENV: production
+    ports:
+      - "3000:3000"

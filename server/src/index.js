@@ -27,4 +27,10 @@ app.get("/", (req, res) => {
 	return res.json({ message: "Servidor levantado" });
 });
 
+app.post("/", (req, res) => {
+	const body = req.body;
+	console.log(body);
+	return res.json({ message: "Dato registrado" });
+});
+
 app.listen(PORT, () => console.log(`App listening on port ${PORT}!`));

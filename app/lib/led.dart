@@ -3,7 +3,12 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'package:http/http.dart' as http;
 
+// URL de la API a consumir
+var url = '';
+
+// Pagina de chat
 class ChatPage extends StatefulWidget {
   final BluetoothDevice server;
   const ChatPage({this.server});
@@ -11,12 +16,16 @@ class ChatPage extends StatefulWidget {
   _ChatPage createState() => new _ChatPage();
 }
 
+// Mensaje
 class _Message {
+  // Quien lo envio y el texto
   int whom;
   String text;
+  // Constructor
   _Message(this.whom, this.text);
 }
 
+// Pagina de chat
 class _ChatPage extends State<ChatPage> {
   static final clientID = 0;
   BluetoothConnection connection;
@@ -28,9 +37,11 @@ class _ChatPage extends State<ChatPage> {
   bool isConnecting = true;
   bool get isConnected => connection != null && connection.isConnected;
   bool isDisconnecting = false;
+
   @override
   void initState() {
     super.initState();
+    // Conexion bluetooth
     BluetoothConnection.toAddress(widget.server.address).then((_connection) {
       print('Connected to the device');
       connection = _connection;
@@ -40,12 +51,7 @@ class _ChatPage extends State<ChatPage> {
         messages.add(_Message(1, "Welcome to your IoT App"));
       });
       connection.input.listen(_onDataReceived).onDone(() {
-        // Example: Detect which side closed the connection
-        // There should be `isDisconnecting` flag to show are we are (locally)
-        // in middle of disconnecting process, should be set before calling
-        // `dispose`, `finish` or `close`, which all causes to disconnect.
-        // If we except the disconnection, `onDone` should be fired as result.
-        // If we didn't except this (no flag set), it means closing by remote.
+        // Verificacion de que lado se realizo la desconexion
         if (isDisconnecting) {
           print('Disconnecting locally!');
         } else {
@@ -169,18 +175,11 @@ class _ChatPage extends State<ChatPage> {
   }
 
   void _onDataReceived(Uint8List data) {
-    // Allocate buffer for parsed data
-    int backspacesCounter = 0;
-    data.forEach((byte) {
-      if (byte == 8 || byte == 127) {
-        backspacesCounter++;
-      }
-    });
-    Uint8List buffer = Uint8List(data.length - backspacesCounter);
+    // Asignar búfer para datos analizados
+    Uint8List buffer = Uint8List(data.length);
     int bufferIndex = buffer.length;
-
-    // Apply backspace control character
-    backspacesCounter = 0;
+    // Aplicar control para baskspace
+    int backspacesCounter = 0;
     for (int i = data.length - 1; i >= 0; i--) {
       if (data[i] == 8 || data[i] == 127) {
         backspacesCounter++;
@@ -192,24 +191,30 @@ class _ChatPage extends State<ChatPage> {
         }
       }
     }
-
-    // Create message if there is new line character
+    // Crear mensaje si hay un carácter de nueva línea
     String dataString = String.fromCharCodes(buffer);
     int index = buffer.indexOf(13);
     if (~index != 0) {
+      String aux = backspacesCounter > 0
+          ? _messageBuffer.substring(
+              0, _messageBuffer.length - backspacesCounter)
+          : _messageBuffer + dataString.substring(0, index);
       setState(() {
-        messages.add(
-          _Message(
-            1,
-            backspacesCounter > 0
-                ? _messageBuffer.substring(
-                    0, _messageBuffer.length - backspacesCounter)
-                : _messageBuffer + dataString.substring(0, index),
-          ),
-        );
-        _messageBuffer = dataString.substring(index);
+        messages.add(_Message(1, "Temperatura: " + aux));
+        _messageBuffer = "";
       });
+      // Una vez creado el mensaje que nos envio el dispositivo bluetooh
+      //procedemos a realizar una peticion POST para que pueda ser operado
+      //por la API
+      http
+          .post(url, body: {'temperature': aux})
+          .then((res) {})
+          .catchError((error) {
+            print('Cannot connect, exception occured');
+            print(error);
+          });
     } else {
+      // En caso contrario agregamos el contenido que llega al buffer
       _messageBuffer = (backspacesCounter > 0
           ? _messageBuffer.substring(
               0, _messageBuffer.length - backspacesCounter)
@@ -217,16 +222,19 @@ class _ChatPage extends State<ChatPage> {
     }
   }
 
+  // Envio de mensajes
   void _sendMessage(String text) async {
     text = text.trim();
     textEditingController.clear();
-
+    text = text == '1' ? "1" : "0";
     if (text.length > 0) {
       try {
+        // Envio del estado para prender o apagar la LED
         connection.output.add(utf8.encode(text + "\r\n"));
         await connection.output.allSent;
         setState(() {
-          messages.add(_Message(clientID, text));
+          messages
+              .add(_Message(clientID, text == '1' ? "LED: on" : "LED: off"));
         });
         Future.delayed(Duration(milliseconds: 333)).then((_) {
           listScrollController.animateTo(
@@ -235,7 +243,7 @@ class _ChatPage extends State<ChatPage> {
               curve: Curves.easeOut);
         });
       } catch (e) {
-        // Ignore error, but notify state
+        // Ignorar el error, pero notificar al estado
         setState(() {});
       }
     }
